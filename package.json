@@ -13,5 +13,8 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ]
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.3"
   }
 }
