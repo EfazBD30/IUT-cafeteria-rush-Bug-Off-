@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IUT Cafeteria Rush</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0F172A;
+            color: #F1F5F9;
+        }
+
+        header {
+            background-color: #1E293B;
+            color: #F1F5F9;
+            padding: 16px 24px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* login section */
+        .login-box {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 32px;
+            max-width: 400px;
+            margin: 40px auto;
+        }
+
+        .login-box h2 {
+            font-size: 20px;
+            margin-bottom: 24px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #e67e22;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-login:hover {
+            background-color: #d35400;
+        }
+
+        /* welcome bar */
+        .welcome-bar {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-bar span {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* food cards */
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .food-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .food-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .food-emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .food-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #1a1a1a;
+        }
+
+        .food-price {
+            font-size: 14px;
+            color: #e67e22;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .food-stock {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 14px;
+        }
+
+        .food-stock.low {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .btn-order {
+            width: 100%;
+            padding: 10px;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-order:hover {
+            background-color: #d35400;
+        }
+
+        .btn-order:disabled {
+            background-color: #bbb;
+            cursor: not-allowed;
+        }
+
+        /* error message */
+        .error-message {
+            background-color: #fdecea;
+            border: 1px solid #e74c3c;
+            color: #c0392b;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* order status bar */
+        .status-bar {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            margin-top: 16px;
+        }
+
+        .status-bar h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .status-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .status-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background-color: #ddd;
+            z-index: 0;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 18px;
+            transition: background-color 0.4s;
+        }
+
+        .step.active .step-icon {
+            background-color: #e67e22;
+        }
+
+        .step.done .step-icon {
+            background-color: #27ae60;
+        }
+
+        .step-label {
+            font-size: 12px;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .step.active .step-label,
+        .step.done .step-label {
+            color: #2c3e50;
+        }
+
+        /* hidden class */
+        .hidden {
+            display: none;
+        }
+
+        /* responsive */
+        @media (max-width: 600px) {
+            .food-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .step-label {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <img src="Logo-2.png" alt="IUT Logo" style="width:80px; height:40px; object-fit:contain; margin-bottom:8px;">
+        <h1>🍽️ IUT Cafeteria Rush</h1>
+        <p>Fast food ordering for IUT students</p>
+    </header>
+
+    <div class="container">
+
+        <!-- login section -->
+        <div id="loginSection">
+            <div class="login-box">
+                <h2>Student Login</h2>
+
+                <div id="loginError" class="error-message"></div>
+
+                <div class="form-group">
+                    <label>Student ID</label>
+                    <input type="text" id="studentIdInput" placeholder="e.g. 210041101" />
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="passwordInput" placeholder="Enter your password" />
+                </div>
+
+                <button class="btn-login" onclick="handleLogin()">Login</button>
+            </div>
+        </div>
+
+        <!-- main app section (shown after login) -->
+        <div id="appSection" class="hidden">
+
+            <!-- welcome bar -->
+            <div class="welcome-bar">
+                <span>👋 Welcome, Student <span id="welcomeStudentId"></span></span>
+                <button class="btn-logout" onclick="handleLogout()">Logout</button>
+            </div>
+
+            <!-- error message for orders -->
+            <div id="orderError" class="error-message"></div>
+
+            <!-- food items -->
+            <p class="section-title">🍴 Today's Menu</p>
+            <div class="food-grid" id="foodGrid">
+                <!-- cards will be added here by javascript -->
+            </div>
+
+            <!-- order status bar -->
+            <div class="status-bar">
+                <h3>📦 Order Status</h3>
+                <div class="status-steps">
+                    <div class="step" id="step-pending">
+                        <div class="step-icon">🕐</div>
+                        <div class="step-label">Pending</div>
+                    </div>
+                    <div class="step" id="step-verified">
+                        <div class="step-icon">✅</div>
+                        <div class="step-label">Stock Verified</div>
+                    </div>
+                    <div class="step" id="step-kitchen">
+                        <div class="step-icon">👨‍🍳</div>
+                        <div class="step-label">In Kitchen</div>
+                    </div>
+                    <div class="step" id="step-ready">
+                        <div class="step-icon">🎉</div>
+                        <div class="step-label">Ready!</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // all the api urls
+        const IDENTITY_URL = 'http://localhost:3001'
+        const ORDER_URL = 'http://localhost:3002'
+        const NOTIFICATION_WS = 'ws://localhost:3005'
+
+        // store token and student id after login
+        let userToken = null
+        let currentStudentId = null
+        let wsConnection = null
+
+        // food items list - in real life this would come from an api
+        const foodItems = [
+            { id: 'item_1', name: 'Beef Tehari', emoji: '🍛', price: 60, stock: 50 },
+            { id: 'item_2', name: 'Chicken Burger', emoji: '🍔', price: 45, stock: 30 },
+            { id: 'item_3', name: 'Egg Khichuri', emoji: '🥘', price: 35, stock: 5 },
+            { id: 'item_4', name: 'Paratha + Bhaji', emoji: '🫓', price: 25, stock: 80 }
+        ]
+
+        // render the food cards on screen
+        function renderFoodCards() {
+            const grid = document.getElementById('foodGrid')
+            grid.innerHTML = ''
+
+            foodItems.forEach(function (item) {
+                const isLowStock = item.stock <= 10
+                const isOutOfStock = item.stock <= 0
+
+                const card = document.createElement('div')
+                card.className = 'food-card'
+                card.innerHTML = `
+                <div class="food-emoji">${item.emoji}</div>
+                <div class="food-name">${item.name}</div>
+                <div class="food-price">৳${item.price}</div>
+                <div class="food-stock ${isLowStock ? 'low' : ''}">
+                    ${isOutOfStock ? 'Out of Stock' : `Stock: ${item.stock}`}
+                </div>
+                <button 
+                    class="btn-order" 
+                    onclick="handleOrder('${item.id}')"
+                    ${isOutOfStock ? 'disabled' : ''}
+                >
+                    ${isOutOfStock ? 'Unavailable' : 'Order Now'}
+                </button>
+            `
+                grid.appendChild(card)
+            })
+        }
+
+        // handle login button click
+        async function handleLogin() {
+            const studentId = document.getElementById('studentIdInput').value.trim()
+            const password = document.getElementById('passwordInput').value.trim()
+            const errorBox = document.getElementById('loginError')
+
+            // hide previous error
+            errorBox.style.display = 'none'
+
+            if (!studentId || !password) {
+                errorBox.textContent = 'Please enter both Student ID and password'
+                errorBox.style.display = 'block'
+                return
+            }
+
+            try {
+                const response = await fetch(`${IDENTITY_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId, password })
+                })
+
+                const data = await response.json()
+
+                if (!data.success) {
+                    errorBox.textContent = data.message || 'Login failed'
+                    errorBox.style.display = 'block'
+                    return
+                }
+
+                // save token and student id
+                userToken = data.token
+                currentStudentId = data.studentId
+
+                // show app, hide login
+                document.getElementById('loginSection').classList.add('hidden')
+                document.getElementById('appSection').classList.remove('hidden')
+                document.getElementById('welcomeStudentId').textContent = currentStudentId
+
+                // render food cards
+                renderFoodCards()
+
+                // connect to websocket for order updates
+                connectWebSocket()
+
+            } catch (err) {
+                errorBox.textContent = 'Could not connect to server. Is it running?'
+                errorBox.style.display = 'block'
+            }
+        }
+
+        // handle order button click
+        async function handleOrder(foodItemId) {
+            const errorBox = document.getElementById('orderError')
+            errorBox.style.display = 'none'
+
+            // reset status bar
+            resetStatusSteps()
+
+            // mark first step as active
+            setStepActive('step-pending')
+
+            try {
+                const response = await fetch(`${ORDER_URL}/order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`
+                    },
+                    body: JSON.stringify({ foodItemId: foodItemId, quantity: 1 })
+                })
+
+                const data = await response.json()
+
+                if (!data.success) {
+                    errorBox.textContent = data.message || 'Order failed'
+                    errorBox.style.display = 'block'
+                    resetStatusSteps()
+                    return
+                }
+
+                console.log('Order placed successfully:', data.orderId)
+
+            } catch (err) {
+                errorBox.textContent = 'Order failed. Please try again.'
+                errorBox.style.display = 'block'
+                resetStatusSteps()
+            }
+        }
+
+        // connect to websocket server
+        function connectWebSocket() {
+            try {
+                wsConnection = new WebSocket(NOTIFICATION_WS)
+
+                wsConnection.onopen = function () {
+                    console.log('WebSocket connected')
+
+                    // tell server who we are
+                    wsConnection.send(JSON.stringify({
+                        type: 'identify',
+                        studentId: currentStudentId
+                    }))
+                }
+
+                wsConnection.onmessage = function (event) {
+                    const data = JSON.parse(event.data)
+                    console.log('WebSocket message:', data)
+
+                    // handle order status updates
+                    if (data.type === 'orderUpdate') {
+                        updateStatusBar(data.status)
+                    }
+                }
+
+                wsConnection.onerror = function (err) {
+                    console.log('WebSocket error:', err)
+                }
+
+                wsConnection.onclose = function () {
+                    console.log('WebSocket disconnected')
+                }
+
+            } catch (err) {
+                console.log('Could not connect to WebSocket:', err)
+            }
+        }
+
+        // update the status bar based on order status
+        function updateStatusBar(status) {
+            if (status === 'Stock Verified') {
+                setStepDone('step-pending')
+                setStepActive('step-verified')
+            }
+
+            if (status === 'In Kitchen') {
+                setStepDone('step-pending')
+                setStepDone('step-verified')
+                setStepActive('step-kitchen')
+            }
+
+            if (status === 'Ready') {
+                setStepDone('step-pending')
+                setStepDone('step-verified')
+                setStepDone('step-kitchen')
+                setStepActive('step-ready')
+            }
+        }
+
+        function setStepActive(stepId) {
+            document.getElementById(stepId).classList.add('active')
+        }
+
+        function setStepDone(stepId) {
+            document.getElementById(stepId).classList.remove('active')
+            document.getElementById(stepId).classList.add('done')
+        }
+
+        function resetStatusSteps() {
+            const steps = ['step-pending', 'step-verified', 'step-kitchen', 'step-ready']
+            steps.forEach(function (stepId) {
+                document.getElementById(stepId).classList.remove('active', 'done')
+            })
+        }
+
+        // handle logout
+        function handleLogout() {
+            userToken = null
+            currentStudentId = null
+
+            if (wsConnection) {
+                wsConnection.close()
+            }
+
+            document.getElementById('appSection').classList.add('hidden')
+            document.getElementById('loginSection').classList.remove('hidden')
+            document.getElementById('studentIdInput').value = ''
+            document.getElementById('passwordInput').value = ''
+        }
+
+        // allow pressing enter to login
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                const loginSection = document.getElementById('loginSection')
+                if (!loginSection.classList.contains('hidden')) {
+                    handleLogin()
+                }
+            }
+        })
+    </script>
+
+</body>
+
+</html>

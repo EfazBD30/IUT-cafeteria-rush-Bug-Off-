@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IUT Cafeteria — Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .last-updated {
+            font-size: 13px;
+            opacity: 0.7;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+
+        /* health grid */
+        .health-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .health-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        .service-name {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .status-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-bottom: 8px;
+            background-color: #bbb;
+        }
+
+        .status-dot.green {
+            background-color: #27ae60;
+        }
+
+        .status-dot.red {
+            background-color: #e74c3c;
+        }
+
+        .status-text {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .status-text.online {
+            color: #27ae60;
+        }
+
+        .status-text.offline {
+            color: #e74c3c;
+        }
+
+        .last-checked {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* metrics section */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 20px;
+        }
+
+        .metric-service {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .metric-value {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .metric-value.error {
+            color: #e74c3c;
+        }
+
+        /* chaos panel */
+        .chaos-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 24px;
+        }
+
+        .chaos-warning {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .chaos-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn-chaos {
+            padding: 10px 20px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-chaos:hover {
+            background-color: #1a252f;
+        }
+
+        .btn-chaos.killing {
+            background-color: #e74c3c;
+        }
+
+        .btn-chaos.recovering {
+            background-color: #f39c12;
+        }
+
+        .btn-chaos.recovered {
+            background-color: #27ae60;
+        }
+
+        @media (max-width: 600px) {
+            .chaos-buttons {
+                flex-direction: column;
+            }
+
+            .btn-chaos {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body style="overflow:hidden">
+<!-- admin login overlay -->
+<div id="adminLoginOverlay" style="
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.97);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+">
+    <div style="
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        text-align: center;
+        width: 320px;
+    ">
+        <img src="Logo.png" alt="IUT Logo" style="width:60px; margin-bottom:16px;">
+        <h2 style="color:#2c3e50; margin-bottom:8px;">Admin Access</h2>
+        <p style="color:#888; font-size:13px; margin-bottom:20px;">Authorized personnel only</p>
+        <input 
+            type="password" 
+            id="adminPasswordInput"
+            placeholder="Enter admin password"
+            style="
+                width:100%;
+                padding:10px 14px;
+                border:1px solid #ddd;
+                border-radius:6px;
+                font-size:15px;
+                margin-bottom:12px;
+                outline:none;
+            "
+        />
+        <div id="adminLoginError" style="
+            color:#e74c3c;
+            font-size:13px;
+            margin-bottom:12px;
+            display:none;
+        ">Wrong password!</div>
+        <button onclick="checkAdminPassword()" style="
+            width:100%;
+            padding:12px;
+            background:#e67e22;
+            color:white;
+            border:none;
+            border-radius:6px;
+            font-size:16px;
+            font-weight:600;
+            cursor:pointer;
+        ">Enter Dashboard</button>
+    </div>
+</div>
+<header>
+    <h1>⚙️ IUT Cafeteria — Admin Dashboard</h1>
+    <span class="last-updated" id="lastUpdated">Updating...</span>
+</header>
+
+<div class="container">
+
+    <!-- health section -->
+    <p class="section-title">🟢 Service Health</p>
+    <div class="health-grid" id="healthGrid">
+        <!-- cards added by js -->
+    </div>
+
+    <!-- metrics section -->
+    <p class="section-title">📊 Live Metrics</p>
+    <div class="metrics-grid" id="metricsGrid">
+        <!-- cards added by js -->
+    </div>
+
+    <!-- chaos panel -->
+    <p class="section-title">💥 Chaos Testing Panel</p>
+    <div class="chaos-panel">
+        <p class="chaos-warning">⚠️ Warning: These buttons will crash the selected service container. Use only for testing.</p>
+        <div class="chaos-buttons" id="chaosButtons">
+            <!-- buttons added by js -->
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // admin password check
+const ADMIN_PASSWORD = "iutadmin"
+
+function checkAdminPassword() {
+    const inputPassword = document.getElementById('adminPasswordInput').value
+    const errorBox = document.getElementById('adminLoginError')
+
+    if (inputPassword === ADMIN_PASSWORD) {
+        // correct password - hide the overlay
+        document.getElementById('adminLoginOverlay').style.display = 'none'
+    } else {
+        // wrong password
+        errorBox.style.display = 'block'
+        document.getElementById('adminPasswordInput').value = ''
+    }
+}
+
+// allow pressing enter to login
+document.addEventListener('keydown', function(e) {
+    const overlay = document.getElementById('adminLoginOverlay')
+    if (e.key === 'Enter' && overlay.style.display !== 'none') {
+        checkAdminPassword()
+    }
+})
+    // all services we monitor
+    const services = [
+        { name: 'Identity Provider', port: 3001, id: 'identity-provider' },
+        { name: 'Order Gateway', port: 3002, id: 'order-gateway' },
+        { name: 'Stock Service', port: 3003, id: 'stock-service' },
+        { name: 'Kitchen Queue', port: 3004, id: 'kitchen-queue' },
+        { name: 'Notification Hub', port: 3005, id: 'notification-hub' }
+    ]
+
+    // store health and metrics data
+    let healthData = {}
+    let metricsData = {}
+
+    // build the health cards on page load
+    function buildHealthGrid() {
+        const grid = document.getElementById('healthGrid')
+        grid.innerHTML = ''
+
+        services.forEach(function(service) {
+            const card = document.createElement('div')
+            card.className = 'health-card'
+            card.id = `health-${service.id}`
+            card.innerHTML = `
+                <div class="service-name">${service.name}</div>
+                <span class="status-dot" id="dot-${service.id}"></span>
+                <div class="status-text" id="status-${service.id}">Checking...</div>
+                <div class="last-checked" id="checked-${service.id}">--</div>
+            `
+            grid.appendChild(card)
+        })
+    }
+
+    // build metrics cards
+    function buildMetricsGrid() {
+        const grid = document.getElementById('metricsGrid')
+        grid.innerHTML = ''
+
+        services.forEach(function(service) {
+            const card = document.createElement('div')
+            card.className = 'metric-card'
+            card.id = `metrics-${service.id}`
+            card.innerHTML = `
+                <div class="metric-service">${service.name}</div>
+                <div class="metric-row">
+                    <span>Total Requests</span>
+                    <span class="metric-value" id="req-${service.id}">--</span>
+                </div>
+                <div class="metric-row">
+                    <span>Total Errors</span>
+                    <span class="metric-value error" id="err-${service.id}">--</span>
+                </div>
+                <div class="metric-row">
+                    <span>Avg Latency</span>
+                    <span class="metric-value" id="lat-${service.id}">--</span>
+                </div>
+            `
+            grid.appendChild(card)
+        })
+    }
+
+    // build chaos buttons
+    function buildChaosButtons() {
+        const container = document.getElementById('chaosButtons')
+        container.innerHTML = ''
+
+        services.forEach(function(service) {
+            const btn = document.createElement('button')
+            btn.className = 'btn-chaos'
+            btn.id = `chaos-${service.id}`
+            btn.textContent = `Kill ${service.name}`
+            btn.onclick = function() { handleChaos(service) }
+            container.appendChild(btn)
+        })
+    }
+
+    // check health of all services
+    async function checkAllHealth() {
+        for (const service of services) {
+            try {
+                const response = await fetch(`http://localhost:${service.port}/health`, {
+                    signal: AbortSignal.timeout(3000)
+                })
+
+                const now = new Date().toLocaleTimeString()
+
+                if (response.ok) {
+                    document.getElementById(`dot-${service.id}`).className = 'status-dot green'
+                    document.getElementById(`status-${service.id}`).textContent = 'Online'
+                    document.getElementById(`status-${service.id}`).className = 'status-text online'
+                    document.getElementById(`checked-${service.id}`).textContent = `Checked: ${now}`
+                } else {
+                    setServiceOffline(service.id)
+                }
+
+            } catch (err) {
+                setServiceOffline(service.id)
+            }
+        }
+    }
+
+    // mark a service as offline in the ui
+    function setServiceOffline(serviceId) {
+        const now = new Date().toLocaleTimeString()
+        document.getElementById(`dot-${serviceId}`).className = 'status-dot red'
+        document.getElementById(`status-${serviceId}`).textContent = 'Offline'
+        document.getElementById(`status-${serviceId}`).className = 'status-text offline'
+        document.getElementById(`checked-${serviceId}`).textContent = `Checked: ${now}`
+    }
+
+    // fetch metrics from all services
+    async function fetchAllMetrics() {
+        for (const service of services) {
+            try {
+                const response = await fetch(`http://localhost:${service.port}/metrics`, {
+                    signal: AbortSignal.timeout(3000)
+                })
+
+                if (response.ok) {
+                    const data = await response.json()
+                    document.getElementById(`req-${service.id}`).textContent = data.totalRequests || 0
+                    document.getElementById(`err-${service.id}`).textContent = data.totalErrors || 0
+                    document.getElementById(`lat-${service.id}`).textContent = `${data.avgResponseTimeMs || 0}ms`
+                }
+
+            } catch (err) {
+                document.getElementById(`req-${service.id}`).textContent = 'N/A'
+                document.getElementById(`err-${service.id}`).textContent = 'N/A'
+                document.getElementById(`lat-${service.id}`).textContent = 'N/A'
+            }
+        }
+    }
+
+    // handle chaos button click
+    async function handleChaos(service) {
+        const btn = document.getElementById(`chaos-${service.id}`)
+
+        // change button to red killing state
+        btn.textContent = `Killing ${service.name}...`
+        btn.className = 'btn-chaos killing'
+        btn.disabled = true
+
+        try {
+            // send kill request to the service
+            await fetch(`http://localhost:${service.port}/die`, { method: 'POST' })
+        } catch (err) {
+            // it's fine if this fails - service might already be dead
+        }
+
+        // wait 2 seconds then show restarting
+        setTimeout(function() {
+            btn.textContent = `Restarting...`
+            btn.className = 'btn-chaos recovering'
+        }, 2000)
+
+        // after 5 seconds check if it recovered
+        setTimeout(async function() {
+            try {
+                const response = await fetch(`http://localhost:${service.port}/health`, {
+                    signal: AbortSignal.timeout(3000)
+                })
+
+                if (response.ok) {
+                    btn.textContent = `✅ ${service.name} Recovered`
+                    btn.className = 'btn-chaos recovered'
+                } else {
+                    btn.textContent = `❌ Still Down — Kill ${service.name}`
+                    btn.className = 'btn-chaos killing'
+                }
+
+            } catch (err) {
+                btn.textContent = `❌ Still Down — Kill ${service.name}`
+                btn.className = 'btn-chaos killing'
+            }
+
+            // re-enable after 3 more seconds
+            setTimeout(function() {
+                btn.textContent = `Kill ${service.name}`
+                btn.className = 'btn-chaos'
+                btn.disabled = false
+            }, 3000)
+
+        }, 5000)
+    }
+
+    // update the last updated time in header
+    function updateTimestamp() {
+        const now = new Date().toLocaleTimeString()
+        document.getElementById('lastUpdated').textContent = `Last updated: ${now}`
+    }
+
+    // run everything when page loads
+    buildHealthGrid()
+    buildMetricsGrid()
+    buildChaosButtons()
+    checkAllHealth()
+    fetchAllMetrics()
+    updateTimestamp()
+
+    // auto refresh every 3 seconds
+    setInterval(function() {
+        checkAllHealth()
+        fetchAllMetrics()
+        updateTimestamp()
+    }, 3000)
+</script>
+
+</body>
+</html>

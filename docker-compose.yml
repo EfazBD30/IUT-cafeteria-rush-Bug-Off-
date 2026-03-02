@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: cafeteria-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cafeteria
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d cafeteria"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: cafeteria-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ message queue
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: cafeteria-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # Identity Provider Service
+  identity-provider:
+    build:
+      context: ./services/identity-provider
+      dockerfile: Dockerfile
+    container_name: cafeteria-identity
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      JWT_SECRET: mysecretkey123
+      JWT_EXPIRES_IN: 1h
+    depends_on:
+      - redis
+
+  # Order Gateway Service
+  order-gateway:
+    build:
+      context: ./services/order-gateway
+      dockerfile: Dockerfile
+    container_name: cafeteria-gateway
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      JWT_SECRET: mysecretkey123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      STOCK_SERVICE_URL: http://stock-service:3003
+      KITCHEN_SERVICE_URL: http://kitchen-queue:3004
+    depends_on:
+      redis:
+        condition: service_healthy
+      identity-provider:
+        condition: service_started
+
+  # Stock Service
+  stock-service:
+    build:
+      context: ./services/stock-service
+      dockerfile: Dockerfile
+    container_name: cafeteria-stock
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cafeteria
+      DB_USER: admin
+      DB_PASSWORD: admin123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Kitchen Queue Service
+  kitchen-queue:
+    build:
+      context: ./services/kitchen-queue
+      dockerfile: Dockerfile
+    container_name: cafeteria-kitchen
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    environment:
+      PORT: 3004
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # Notification Hub Service
+  notification-hub:
+    build:
+      context: ./services/notification-hub
+      dockerfile: Dockerfile
+    container_name: cafeteria-notification
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    environment:
+      PORT: 3005
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

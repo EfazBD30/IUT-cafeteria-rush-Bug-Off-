@@ -1,0 +1,17 @@
+{
+  "name": "iut-cafeteria-rush",
+  "version": "1.0.0",
+  "description": "Microservice based cafeteria ordering system for IUT",
+  "scripts": {
+    "test": "jest --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}
