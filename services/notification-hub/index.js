@@ -6,7 +6,7 @@ const express = require('express')
 const http = require('http')
 const cors = require('cors')
 const { setupWebSocket } = require('./websocket/notifier')
-const { startListening } = require('./queue/listener')
+const { startListening, closeConnections } = require('./queue/listener')
 
 const app = express()
 const PORT = process.env.PORT || 3005
@@ -53,9 +53,29 @@ app.get('/metrics', (req, res) => {
         service: "notification-hub",
         totalRequests: app.locals.metrics.totalRequests,
         totalErrors: app.locals.metrics.errors,
-        avgResponseTimeMs: avgTime
+        avgResponseTimeMs: avgTime,
+        activeConnections: require('./websocket/notifier').getActiveConnections()
     })
 })
+
+// =====================================================
+// CHAOS ENGINEERING ENDPOINT - for admin dashboard
+// =====================================================
+app.post('/die', (req, res) => {
+    console.log('💀 Notification Hub is going down (chaos toggle triggered)')
+    console.log('Docker will restart this service automatically')
+    
+    res.status(200).json({ 
+        success: true,
+        message: 'Service is shutting down...' 
+    })
+    
+    // kill the process after sending response
+    setTimeout(() => {
+        process.exit(1)
+    }, 100)
+})
+// =====================================================
 
 // we need to create an http server manually
 // because websocket needs to share the same server
@@ -68,6 +88,25 @@ setupWebSocket(server)
 startListening()
 
 server.listen(PORT, () => {
-    console.log(`Notification Hub running on port ${PORT}`)
-    console.log(`WebSocket also available on port ${PORT}`)
+    console.log(`✅ Notification Hub running on port ${PORT}`)
+    console.log(`✅ WebSocket available at ws://localhost:${PORT}`)
+})
+
+// graceful shutdown
+process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, closing connections...')
+    await closeConnections()
+    server.close(() => {
+        console.log('Server closed')
+        process.exit(0)
+    })
+})
+
+process.on('SIGINT', async () => {
+    console.log('SIGINT received, closing connections...')
+    await closeConnections()
+    server.close(() => {
+        console.log('Server closed')
+        process.exit(0)
+    })
 })

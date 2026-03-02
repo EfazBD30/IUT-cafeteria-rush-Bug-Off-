@@ -62,7 +62,36 @@ app.get('/metrics', (req, res) => {
         avgResponseTimeMs: avgResponseTime
     })
 })
-
+// chaos engineering endpoint - kills this service when called from admin panel
+app.post('/die', (req, res) => {
+    console.log('💀 Identity Provider is going down (chaos toggle triggered)')
+    console.log('Docker will restart this service automatically')
+    
+    res.status(200).json({ 
+        success: true,
+        message: 'Service is shutting down...' 
+    })
+    
+    // kill the process after sending response
+    setTimeout(() => {
+        process.exit(1)
+    }, 100)
+})
+// chaos engineering endpoint - kills this service when called from admin panel
+app.post('/die', (req, res) => {
+    console.log('💀 Order Gateway is going down (chaos toggle triggered)')
+    console.log('Docker will restart this service automatically')
+    
+    res.status(200).json({ 
+        success: true,
+        message: 'Service is shutting down...' 
+    })
+    
+    // kill the process after sending response
+    setTimeout(() => {
+        process.exit(1)
+    }, 100)
+})
 app.listen(PORT, () => {
     console.log(`Identity Provider running on port ${PORT}`)
 })

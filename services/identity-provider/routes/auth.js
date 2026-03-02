@@ -4,8 +4,7 @@ const router = express.Router()
 const jwt = require('jsonwebtoken')
 const rateLimiter = require('../middleware/rateLimiter')
 
-// fake student database - in real life this would be a real database
-// but for hackathon demo this is fine
+// fake student database
 const studentDatabase = {
     "240041229": "iutcse229",
     "240041230": "iutcse230",
@@ -13,12 +12,10 @@ const studentDatabase = {
 }
 
 // POST /login
-// student sends their id and password, we check and give back a token
 router.post('/login', rateLimiter, (req, res) => {
     const studentId = req.body.studentId
     const password = req.body.password
 
-    // check if they sent both fields
     if (!studentId || !password) {
         req.app.locals.metrics.errors++
         return res.status(400).json({
@@ -27,7 +24,6 @@ router.post('/login', rateLimiter, (req, res) => {
         })
     }
 
-    // check if student id exists in our database
     const correctPassword = studentDatabase[studentId]
 
     if (!correctPassword) {
@@ -38,7 +34,6 @@ router.post('/login', rateLimiter, (req, res) => {
         })
     }
 
-    // check if password matches
     if (correctPassword !== password) {
         req.app.locals.metrics.errors++
         return res.status(401).json({
@@ -47,13 +42,15 @@ router.post('/login', rateLimiter, (req, res) => {
         })
     }
 
-    // all good! create a JWT token for this student
+    // ✅ FIXED: JWT_SECRET fallback added
+    const jwtSecret = process.env.JWT_SECRET || 'mysecretkey123'
+    
     const tokenPayload = {
         studentId: studentId,
         role: "student"
     }
 
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
+    const token = jwt.sign(tokenPayload, jwtSecret, {
         expiresIn: process.env.JWT_EXPIRES_IN || "1h"
     })
 

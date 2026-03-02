@@ -56,7 +56,21 @@ app.get('/metrics', (req, res) => {
         avgResponseTimeMs: avgTime
     })
 })
-
+// chaos engineering endpoint - kills this service when called from admin panel
+app.post('/die', (req, res) => {
+    console.log('💀 Stock Service is going down (chaos toggle triggered)')
+    console.log('Docker will restart this service automatically')
+    
+    res.status(200).json({ 
+        success: true,
+        message: 'Service is shutting down...' 
+    })
+    
+    // kill the process after sending response
+    setTimeout(() => {
+        process.exit(1)
+    }, 100)
+})
 app.listen(PORT, () => {
     console.log(`Stock Service running on port ${PORT}`)
 })

@@ -58,9 +58,42 @@ app.get('/metrics', (req, res) => {
     })
 })
 
-// connect to rabbitmq when service starts
+// chaos engineering endpoint
+app.post('/die', (req, res) => {
+    console.log('💀 Kitchen Queue is going down (chaos toggle triggered)')
+    console.log('Docker will restart this service automatically')
+    
+    res.status(200).json({ 
+        success: true,
+        message: 'Service is shutting down...' 
+    })
+    
+    setTimeout(() => {
+        process.exit(1)
+    }, 100)
+})
+
+// connect to rabbitmq
 connectToRabbitMQ()
 
-app.listen(PORT, () => {
-    console.log(`Kitchen Queue running on port ${PORT}`)
+// ✅ FIXED: Single listen with graceful shutdown
+const server = app.listen(PORT, () => {
+    console.log(`✅ Kitchen Queue running on port ${PORT}`)
+})
+
+// graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, closing server...')
+    server.close(() => {
+        console.log('Server closed')
+        process.exit(0)
+    })
+})
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, closing server...')
+    server.close(() => {
+        console.log('Server closed')
+        process.exit(0)
+    })
 })

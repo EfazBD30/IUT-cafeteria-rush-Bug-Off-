@@ -6,7 +6,13 @@ const Redis = require('ioredis')
 // connect to redis
 const redisClient = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379
+    port: process.env.REDIS_PORT || 6379,
+    lazyConnect: true  // connect করবে যখন দরকার, আগে না
+})
+
+redisClient.on('error', (err) => {
+    console.log('Redis cache error:', err.message)
+    // cache fail করলেও service চালু রাখব
 })
 
 redisClient.on('error', (err) => {

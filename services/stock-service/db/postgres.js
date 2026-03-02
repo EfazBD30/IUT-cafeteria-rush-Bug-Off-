@@ -17,10 +17,16 @@ const pool = new Pool({
 pool.connect((err, client, release) => {
     if (err) {
         console.log('Error connecting to PostgreSQL:', err.message)
+        console.log('Stock service will retry connection automatically')
     } else {
         console.log('Connected to PostgreSQL successfully')
         release()
     }
+})
+
+// connection error handling
+pool.on('error', (err) => {
+    console.log('Unexpected PostgreSQL error:', err.message)
 })
 
 module.exports = pool

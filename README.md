@@ -12,24 +12,119 @@ Every Ramadan at IUT, the cafeteria ordering system crashes right at Iftar time 
 
 ## Architecture Overview
 
-Student Browser
-      |
-      v
-Identity Provider  (Login, JWT Token - Port 3001)
-      |
-      | JWT Token
-      v
-Order Gateway (Port 3002) -----> Stock Service (PostgreSQL + Redis - Port 3003)
-      |
-      v
-Kitchen Queue (Port 3004) -----> Notification Hub (WebSocket - Port 3005)
-      |                                   |
-      |------- RabbitMQ ----------------->|
-                                          v
-                                   Student Browser
-                                   (Real-time updates)
+┌─────────────────────────────────────────────────────────────────┐
+│                    IUT Cafeteria Rush                           │
+│                    Architecture Diagram                         │
+└─────────────────────────────────────────────────────────────────┘
 
----
+                              ┌─────────────────┐
+                              │   student.html  │
+                              │   (Browser)     │
+                              └────────┬────────┘
+                                       │
+                                       │ WebSocket (实时更新)
+                                       ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  ┌──────────────────┐          ┌──────────────────┐             │
+│  │  Notification    │◄────────►│    RabbitMQ      │             │
+│  │  Hub (3005)      │          │    (5672)        │             │
+│  └────────┬─────────┘          └────────┬─────────┘             │
+│           │                             │                       │
+│           │                             │                       │
+│           │                     ┌───────▼────────┐              │
+│           │                     │  Kitchen Queue │              │
+│           │                     │    (3004)      │              │
+│           │                     └───────┬────────┘              │
+│           │                             │                       │
+│           └─────────────────────────────┘                       │
+│                        (RabbitMQ)                               │
+│                                                                 │
+│                    ┌──────────────────┐                         │
+│                    │  Order Gateway   │                         │
+│                    │    (3002)        │                         │
+│                    └────────┬─────────┘                         │
+│                             │                                   │
+│                             │                                   │
+│                    ┌────────▼─────────┐                         │
+│                    │   Stock Service  │                         │
+│                    │     (3003)       │                         │
+│                    └────────┬─────────┘                         │
+│                             │                                   │
+│                    ┌────────▼─────────┐    ┌──────────────────┐ │
+│                    │   PostgreSQL     │    │     Redis        │ │
+│                    │   (5432)         │    │   (6379)         │ │
+│                    └──────────────────┘    └──────────────────┘ │
+│                                                                 │
+│                    ┌──────────────────┐                         │
+│                    │    Identity      │                         │
+│                    │   Provider (3001)│                         │
+│                    └────────┬─────────┘                         │
+│                             │                                   │
+│                    ┌────────▼─────────┐                         │
+│                    │   Student Login  │                         │
+│                    │   (Browser)      │                         │
+│                    └──────────────────┘                         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                         Service Ports:                          │
+│   ┌────────────────────┬──────────┬─────────────────────────┐   │
+│   │ Service Name       │ Port     │ Description             │   │
+│   ├────────────────────┼──────────┼─────────────────────────┤   │
+│   │ Identity Provider  │ 3001     │ Login & JWT generation  │   │
+│   │ Order Gateway      │ 3002     │ Main entry for orders   │   │
+│   │ Stock Service      │ 3003     │ Inventory management    │   │
+│   │ Kitchen Queue      │ 3004     │ Cooking pipeline        │   │
+│   │ Notification Hub   │ 3005     │ WebSocket updates       │   │
+│   │ PostgreSQL         │ 5432     │ Main database           │   │
+│   │ Redis              │ 6379     │ Cache for stock         │   │
+│   │ RabbitMQ           │ 5672     │ Message queue           │   │
+│   │ RabbitMQ Management│ 15672    │ Admin UI (guest/guest)  │   │
+│   └────────────────────┴──────────┴─────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                      Request Flow:                              │
+│                                                                 │
+│   1. Student logs in → Identity Provider → JWT Token            │
+│   2. Student places order → Order Gateway                       │
+│   3. Gateway checks Redis cache for stock                       │
+│   4. Stock Service deducts from PostgreSQL                      │
+│   5. Order sent to Kitchen Queue                                │
+│   6. Kitchen sends update to RabbitMQ                           │
+│   7. Notification Hub gets update from RabbitMQ                 │
+│   8. WebSocket pushes update to student.html                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                      Data Flow:                                 │
+│                                                                 │
+│   ┌─────────┐     ┌─────────┐     ┌─────────┐                   │
+│   │ Browser │────▶│ Gateway │────▶│ Stock   │────▶ PostgreSQL │
+│   └─────────┘     └─────────┘     └─────────┘                   │
+│       ▲               │               │                         │
+│       │               │               │                         │
+│       │               ▼               ▼                         │
+│       │           ┌─────────┐     ┌─────────┐                   │
+│       └───────────│ Notifier│◀────│ Kitchen │                  │
+│                   └─────────┘     └─────────┘                   │
+│                        │              │                         │
+│                        │              │                         │
+│                        ▼              ▼                         │
+│                   ┌─────────────────────────┐                   │
+│                   │       RabbitMQ          │                   │
+│                   └─────────────────────────┘                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+
 
 ## Features
 
