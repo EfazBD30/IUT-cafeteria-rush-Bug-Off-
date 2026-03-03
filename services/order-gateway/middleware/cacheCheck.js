@@ -3,30 +3,29 @@
 
 const Redis = require('ioredis')
 
-// connect to redis
+// ✅ FIXED: Better Redis connection with error handling
 const redisClient = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379,
-    lazyConnect: true  // connect করবে যখন দরকার, আগে না
+    lazyConnect: true,  // don't connect until we need it
+    retryStrategy: function(times) {
+        // retry with backoff, max 2 seconds
+        return Math.min(times * 50, 2000)
+    }
 })
 
 redisClient.on('error', (err) => {
-    console.log('Redis cache error:', err.message)
-    // cache fail করলেও service চালু রাখব
-})
-
-redisClient.on('error', (err) => {
-    console.log('Redis connection error:', err.message)
+    console.log('⚠️ Redis connection error (cache check):', err.message)
+    console.log('Cache will be skipped until Redis recovers')
 })
 
 redisClient.on('connect', () => {
-    console.log('Connected to Redis successfully')
+    console.log('✅ Connected to Redis successfully (cache check)')
 })
 
 async function cacheCheck(req, res, next) {
     const foodItemId = req.body.foodItemId
 
-    // if no food item id, skip cache check and let route handle the error
     if (!foodItemId) {
         return next()
     }
@@ -35,11 +34,9 @@ async function cacheCheck(req, res, next) {
         // check redis for this item's stock
         const cachedStock = await redisClient.get(`stock:${foodItemId}`)
 
-        // if we found something in cache
         if (cachedStock !== null) {
             const stockCount = parseInt(cachedStock)
 
-            // if cache says 0, no need to even call the database
             if (stockCount <= 0) {
                 return res.status(400).json({
                     success: false,
@@ -48,13 +45,11 @@ async function cacheCheck(req, res, next) {
             }
         }
 
-        // stock is available or not in cache yet, move on
         next()
 
     } catch (err) {
         // if redis fails, just skip cache and continue
-        // we don't want cache failure to break orders
-        console.log('Cache check failed, skipping:', err.message)
+        console.log('⚠️ Cache check failed, skipping:', err.message)
         next()
     }
 }
