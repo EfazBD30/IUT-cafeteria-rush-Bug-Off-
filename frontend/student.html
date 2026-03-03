@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -296,25 +297,22 @@
             color: #2c3e50;
         }
 
-        /* hidden class */
         .hidden {
             display: none;
         }
 
-        /* responsive */
         @media (max-width: 600px) {
             .food-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
-
             .step-label {
                 font-size: 10px;
             }
         }
     </style>
 </head>
-<body>
 
+<body>
     <header>
         <img src="Logo-2.png" alt="IUT Logo" style="width:80px; height:40px; object-fit:contain; margin-bottom:8px;">
         <h1>🍽️ IUT Cafeteria Rush</h1>
@@ -322,47 +320,32 @@
     </header>
 
     <div class="container">
-
         <!-- login section -->
         <div id="loginSection">
             <div class="login-box">
                 <h2>Student Login</h2>
-
                 <div id="loginError" class="error-message"></div>
-
                 <div class="form-group">
                     <label>Student ID</label>
                     <input type="text" id="studentIdInput" placeholder="e.g. 210041101">
                 </div>
-
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="passwordInput" placeholder="Enter your password">
                 </div>
-
                 <button class="btn-login" onclick="handleLogin()">Login</button>
             </div>
         </div>
 
-        <!-- main app section (shown after login) -->
+        <!-- main app section -->
         <div id="appSection" class="hidden">
-
-            <!-- welcome bar -->
             <div class="welcome-bar">
                 <span>👋 Welcome, Student <span id="welcomeStudentId"></span></span>
                 <button class="btn-logout" onclick="handleLogout()">Logout</button>
             </div>
-
-            <!-- error message for orders -->
             <div id="orderError" class="error-message"></div>
-
-            <!-- food items -->
             <p class="section-title">🍴 Today's Menu</p>
-            <div class="food-grid" id="foodGrid">
-                <!-- cards will be added here by javascript -->
-            </div>
-
-            <!-- order status bar -->
+            <div class="food-grid" id="foodGrid"></div>
             <div class="status-bar">
                 <h3>📦 Order Status</h3>
                 <div class="status-steps">
@@ -384,22 +367,18 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // all the api urls
         const IDENTITY_URL = 'http://localhost:3001'
         const ORDER_URL = 'http://localhost:3002'
         const NOTIFICATION_WS = 'ws://localhost:3005'
 
-        // store token and student id after login
         let userToken = null
         let currentStudentId = null
         let wsConnection = null
 
-        // food items list
         const foodItems = [
             { id: 'item_1', name: 'Beef Tehari', emoji: '🍛', price: 60, stock: 50 },
             { id: 'item_2', name: 'Chicken Burger', emoji: '🍔', price: 45, stock: 30 },
@@ -407,15 +386,12 @@
             { id: 'item_4', name: 'Paratha + Bhaji', emoji: '🫓', price: 25, stock: 80 }
         ]
 
-        // render the food cards on screen
         function renderFoodCards() {
             const grid = document.getElementById('foodGrid')
             grid.innerHTML = ''
-
-            foodItems.forEach(function(item) {
+            foodItems.forEach(item => {
                 const isLowStock = item.stock <= 10
                 const isOutOfStock = item.stock <= 0
-
                 const card = document.createElement('div')
                 card.className = 'food-card'
                 card.innerHTML = `
@@ -425,11 +401,7 @@
                     <div class="food-stock ${isLowStock ? 'low' : ''}">
                         ${isOutOfStock ? 'Out of Stock' : `Stock: ${item.stock}`}
                     </div>
-                    <button 
-                        class="btn-order" 
-                        onclick="handleOrder('${item.id}')"
-                        ${isOutOfStock ? 'disabled' : ''}
-                    >
+                    <button class="btn-order" onclick="handleOrder('${item.id}')" ${isOutOfStock ? 'disabled' : ''}>
                         ${isOutOfStock ? 'Unavailable' : 'Order Now'}
                     </button>
                 `
@@ -437,12 +409,10 @@
             })
         }
 
-        // handle login button click
         async function handleLogin() {
             const studentId = document.getElementById('studentIdInput').value.trim()
             const password = document.getElementById('passwordInput').value.trim()
             const errorBox = document.getElementById('loginError')
-
             errorBox.style.display = 'none'
 
             if (!studentId || !password) {
@@ -457,7 +427,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ studentId, password })
                 })
-
                 const data = await response.json()
 
                 if (!data.success) {
@@ -475,18 +444,15 @@
 
                 renderFoodCards()
                 connectWebSocket()
-
             } catch (err) {
                 errorBox.textContent = 'Could not connect to server. Is it running?'
                 errorBox.style.display = 'block'
             }
         }
 
-        // handle order button click
         async function handleOrder(foodItemId) {
             const errorBox = document.getElementById('orderError')
             errorBox.style.display = 'none'
-
             resetStatusSteps()
             setStepActive('step-pending')
 
@@ -497,18 +463,15 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${userToken}`
                     },
-                    body: JSON.stringify({ foodItemId: foodItemId, quantity: 1 })
+                    body: JSON.stringify({ foodItemId, quantity: 1 })
                 })
-
                 const data = await response.json()
 
                 if (!data.success) {
                     errorBox.textContent = data.message || 'Order failed'
                     errorBox.style.display = 'block'
                     resetStatusSteps()
-                    return
                 }
-
             } catch (err) {
                 errorBox.textContent = 'Order failed. Please try again.'
                 errorBox.style.display = 'block'
@@ -516,53 +479,34 @@
             }
         }
 
-        // connect to websocket server
         function connectWebSocket() {
             try {
                 wsConnection = new WebSocket(NOTIFICATION_WS)
-
-                wsConnection.onopen = function() {
+                wsConnection.onopen = () => {
                     console.log('WebSocket connected')
-                    wsConnection.send(JSON.stringify({
-                        type: 'identify',
-                        studentId: currentStudentId
-                    }))
+                    wsConnection.send(JSON.stringify({ type: 'identify', studentId: currentStudentId }))
                 }
-
-                wsConnection.onmessage = function(event) {
+                wsConnection.onmessage = (event) => {
                     const data = JSON.parse(event.data)
-                    
-                    if (data.type === 'orderUpdate') {
-                        updateStatusBar(data.status)
-                    }
+                    if (data.type === 'orderUpdate') updateStatusBar(data.status)
                 }
-
-                wsConnection.onerror = function(err) {
-                    console.log('WebSocket error:', err)
-                }
-
-                wsConnection.onclose = function() {
-                    console.log('WebSocket disconnected')
-                }
-
+                wsConnection.onerror = (err) => console.log('WebSocket error:', err)
+                wsConnection.onclose = () => console.log('WebSocket disconnected')
             } catch (err) {
                 console.log('Could not connect to WebSocket:', err)
             }
         }
 
-        // update the status bar based on order status
         function updateStatusBar(status) {
             if (status === 'Stock Verified') {
                 setStepDone('step-pending')
                 setStepActive('step-verified')
             }
-
             if (status === 'In Kitchen') {
                 setStepDone('step-pending')
                 setStepDone('step-verified')
                 setStepActive('step-kitchen')
             }
-
             if (status === 'Ready') {
                 setStepDone('step-pending')
                 setStepDone('step-verified')
@@ -581,37 +525,27 @@
         }
 
         function resetStatusSteps() {
-            const steps = ['step-pending', 'step-verified', 'step-kitchen', 'step-ready']
-            steps.forEach(function(stepId) {
-                document.getElementById(stepId).classList.remove('active', 'done')
+            ['step-pending', 'step-verified', 'step-kitchen', 'step-ready'].forEach(id => {
+                document.getElementById(id).classList.remove('active', 'done')
             })
         }
 
-        // handle logout
         function handleLogout() {
             userToken = null
             currentStudentId = null
-
-            if (wsConnection) {
-                wsConnection.close()
-            }
-
+            if (wsConnection) wsConnection.close()
             document.getElementById('appSection').classList.add('hidden')
             document.getElementById('loginSection').classList.remove('hidden')
             document.getElementById('studentIdInput').value = ''
             document.getElementById('passwordInput').value = ''
         }
 
-        // allow pressing enter to login
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const loginSection = document.getElementById('loginSection')
-                if (!loginSection.classList.contains('hidden')) {
-                    handleLogin()
-                }
+                if (!loginSection.classList.contains('hidden')) handleLogin()
             }
         })
     </script>
-
 </body>
 </html>
