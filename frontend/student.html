@@ -376,13 +376,16 @@
     </div>
 
     <script>
-        const IDENTITY_URL = 'http://192.168.0.163:3001'
-	const ORDER_URL = 'http://192.168.0.163:3002'
-	const NOTIFICATION_WS = 'ws://172.18.0.8:3005'
+        const IDENTITY_URL = 'http://localhost:3001'
+const ORDER_URL = 'http://localhost:3002'
+const NOTIFICATION_WS = 'ws://localhost:3005'
 
         let userToken = null
         let currentStudentId = null
         let wsConnection = null
+        let reconnectTimer = null
+        let pingInterval = null
+        let pollingInterval = null
 
         const foodItems = [
             { id: 'item_1', name: 'Beef Tehari', emoji: '🍛', price: 60, stock: 50 },
@@ -485,59 +488,92 @@
         }
 
         function connectWebSocket() {
-    try {
-        // Close existing connection if any
-        if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-            wsConnection.close()
-        }
-
-        wsConnection = new WebSocket(NOTIFICATION_WS)
-        
-        wsConnection.onopen = function() {
-            console.log('WebSocket connected')
-            // Send identify immediately
-            wsConnection.send(JSON.stringify({
-                type: 'identify',
-                studentId: currentStudentId
-            }))
-            
-            // Send ping every 25 seconds to keep connection alive
-            setInterval(() => {
-                if (wsConnection.readyState === WebSocket.OPEN) {
-                    wsConnection.send(JSON.stringify({ type: 'ping' }))
-                }
-            }, 25000)
-        }
-
-        wsConnection.onmessage = function(event) {
             try {
-                const data = JSON.parse(event.data)
-                console.log('WebSocket message:', data)
-                if (data.type === 'orderUpdate') {
-                    updateStatusBar(data.status)
+                if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+                    wsConnection.close()
                 }
+
+                wsConnection = new WebSocket(NOTIFICATION_WS)
+                
+                wsConnection.onopen = function() {
+                    console.log('✅ WebSocket connected')
+                    
+                    if (reconnectTimer) {
+                        clearTimeout(reconnectTimer)
+                        reconnectTimer = null
+                    }
+                    
+                    if (pollingInterval) {
+                        clearInterval(pollingInterval)
+                        pollingInterval = null
+                    }
+                    
+                    wsConnection.send(JSON.stringify({
+                        type: 'identify',
+                        studentId: currentStudentId
+                    }))
+                    
+                    if (pingInterval) clearInterval(pingInterval)
+                    pingInterval = setInterval(() => {
+                        if (wsConnection.readyState === WebSocket.OPEN) {
+                            wsConnection.send(JSON.stringify({ type: 'ping' }))
+                            console.log('📡 Ping sent')
+                        }
+                    }, 25000)
+                }
+
+                wsConnection.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data)
+                        console.log('📦 WebSocket message:', data)
+                        if (data.type === 'orderUpdate') {
+                            updateStatusBar(data.status)
+                        }
+                        if (data.type === 'pong') {
+                            console.log('📡 Pong received')
+                        }
+                    } catch (err) {
+                        console.log('❌ Error parsing message:', err)
+                    }
+                }
+
+                wsConnection.onerror = function(err) {
+                    console.log('❌ WebSocket error:', err)
+                    startPolling()
+                }
+
+                wsConnection.onclose = function(event) {
+                    console.log(`🔴 WebSocket disconnected (code: ${event.code})`)
+                    if (pingInterval) {
+                        clearInterval(pingInterval)
+                        pingInterval = null
+                    }
+                    
+                    if (event.code !== 1000) {
+                        console.log('⏳ Attempting to reconnect in 3 seconds...')
+                        reconnectTimer = setTimeout(connectWebSocket, 3000)
+                    }
+                }
+
             } catch (err) {
-                console.log('Error parsing message:', err)
+                console.log('❌ Could not connect to WebSocket:', err)
+                startPolling()
             }
         }
 
-        wsConnection.onerror = function(err) {
-            console.log('WebSocket error:', err)
-            // Try to reconnect after 3 seconds
-            setTimeout(connectWebSocket, 3000)
+        function startPolling() {
+            console.log('📱 Starting polling fallback...')
+            if (pollingInterval) clearInterval(pollingInterval)
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    // You can add an API endpoint to check order status here
+                    console.log('Polling for updates...')
+                } catch (err) {
+                    console.log('Polling error:', err)
+                }
+            }, 3000)
         }
-
-        wsConnection.onclose = function() {
-            console.log('WebSocket disconnected')
-            // Try to reconnect after 3 seconds
-            setTimeout(connectWebSocket, 3000)
-        }
-
-    } catch (err) {
-        console.log('Could not connect to WebSocket:', err)
-        setTimeout(connectWebSocket, 3000)
-    }
-}
 
         function updateStatusBar(status) {
             if (status === 'Stock Verified') {
@@ -576,6 +612,8 @@
             userToken = null
             currentStudentId = null
             if (wsConnection) wsConnection.close()
+            if (pingInterval) clearInterval(pingInterval)
+            if (pollingInterval) clearInterval(pollingInterval)
             document.getElementById('appSection').classList.add('hidden')
             document.getElementById('loginSection').classList.remove('hidden')
             document.getElementById('studentIdInput').value = ''
