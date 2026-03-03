@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IUT Cafeteria — Admin Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <style>
         * {
             margin: 0;
@@ -60,7 +65,7 @@
         .health-card {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             padding: 20px 16px;
             text-align: center;
         }
@@ -119,7 +124,7 @@
         .metric-card {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             padding: 20px;
         }
 
@@ -153,7 +158,7 @@
         .chaos-panel {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             padding: 24px;
         }
 
@@ -208,9 +213,10 @@
         }
     </style>
 </head>
+
 <body style="overflow:hidden">
-<!-- admin login overlay -->
-<div id="adminLoginOverlay" style="
+    <!-- admin login overlay -->
+    <div id="adminLoginOverlay" style="
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
@@ -220,21 +226,17 @@
     justify-content: center;
     z-index: 9999;
 ">
-    <div style="
+        <div style="
         background: white;
         padding: 40px;
         border-radius: 8px;
         text-align: center;
         width: 320px;
     ">
-        <img src="Logo-1.png" alt="IUT Logo" style="width:60px; margin-bottom:16px;">
-        <h2 style="color:#2c3e50; margin-bottom:8px;">Admin Access</h2>
-        <p style="color:#888; font-size:13px; margin-bottom:20px;">Authorized personnel only</p>
-        <input 
-            type="password" 
-            id="adminPasswordInput"
-            placeholder="Enter admin password"
-            style="
+            <img src="Logo-1.png" alt="IUT Logo" style="width:60px; margin-bottom:16px;">
+            <h2 style="color:#2c3e50; margin-bottom:8px;">Admin Access</h2>
+            <p style="color:#888; font-size:13px; margin-bottom:20px;">Authorized personnel only</p>
+            <input type="password" id="adminPasswordInput" placeholder="Enter admin password" style="
                 width:100%;
                 padding:10px 14px;
                 border:1px solid #ddd;
@@ -242,15 +244,14 @@
                 font-size:15px;
                 margin-bottom:12px;
                 outline:none;
-            "
-        />
-        <div id="adminLoginError" style="
+            " />
+            <div id="adminLoginError" style="
             color:#e74c3c;
             font-size:13px;
             margin-bottom:12px;
             display:none;
         ">Wrong password!</div>
-        <button onclick="checkAdminPassword()" style="
+            <button onclick="checkAdminPassword()" style="
             width:100%;
             padding:12px;
             background:#e67e22;
@@ -261,105 +262,106 @@
             font-weight:600;
             cursor:pointer;
         ">Enter Dashboard</button>
-    </div>
-</div>
-<header>
-    <h1>⚙️ IUT Cafeteria — Admin Dashboard</h1>
-    <span class="last-updated" id="lastUpdated">Updating...</span>
-</header>
-
-<div class="container">
-
-    <!-- health section -->
-    <p class="section-title">🟢 Service Health</p>
-    <div class="health-grid" id="healthGrid">
-        <!-- cards added by js -->
-    </div>
-
-    <!-- metrics section -->
-    <p class="section-title">📊 Live Metrics</p>
-    <div class="metrics-grid" id="metricsGrid">
-        <!-- cards added by js -->
-    </div>
-
-    <!-- chaos panel -->
-    <p class="section-title">💥 Chaos Testing Panel</p>
-    <div class="chaos-panel">
-        <p class="chaos-warning">⚠️ Warning: These buttons will crash the selected service container. Use only for testing.</p>
-        <div class="chaos-buttons" id="chaosButtons">
-            <!-- buttons added by js -->
         </div>
     </div>
+    <header>
+        <h1>⚙️ IUT Cafeteria — Admin Dashboard</h1>
+        <span class="last-updated" id="lastUpdated">Updating...</span>
+    </header>
 
-</div>
+    <div class="container">
 
-<script>
-    // admin password check
-const ADMIN_PASSWORD = "iutadmin"
+        <!-- health section -->
+        <p class="section-title">🟢 Service Health</p>
+        <div class="health-grid" id="healthGrid">
+            <!-- cards added by js -->
+        </div>
 
-function checkAdminPassword() {
-    const inputPassword = document.getElementById('adminPasswordInput').value
-    const errorBox = document.getElementById('adminLoginError')
+        <!-- metrics section -->
+        <p class="section-title">📊 Live Metrics</p>
+        <div class="metrics-grid" id="metricsGrid">
+            <!-- cards added by js -->
+        </div>
 
-    if (inputPassword === ADMIN_PASSWORD) {
-        // correct password - hide the overlay
-        document.getElementById('adminLoginOverlay').style.display = 'none'
-    } else {
-        // wrong password
-        errorBox.style.display = 'block'
-        document.getElementById('adminPasswordInput').value = ''
-    }
-}
+        <!-- chaos panel -->
+        <p class="section-title">💥 Chaos Testing Panel</p>
+        <div class="chaos-panel">
+            <p class="chaos-warning">⚠️ Warning: These buttons will crash the selected service container. Use only for
+                testing.</p>
+            <div class="chaos-buttons" id="chaosButtons">
+                <!-- buttons added by js -->
+            </div>
+        </div>
 
-// allow pressing enter to login
-document.addEventListener('keydown', function(e) {
-    const overlay = document.getElementById('adminLoginOverlay')
-    if (e.key === 'Enter' && overlay.style.display !== 'none') {
-        checkAdminPassword()
-    }
-})
-    // all services we monitor
-    const services = [
-        { name: 'Identity Provider', port: 3001, id: 'identity-provider' },
-        { name: 'Order Gateway', port: 3002, id: 'order-gateway' },
-        { name: 'Stock Service', port: 3003, id: 'stock-service' },
-        { name: 'Kitchen Queue', port: 3004, id: 'kitchen-queue' },
-        { name: 'Notification Hub', port: 3005, id: 'notification-hub' }
-    ]
+    </div>
 
-    // store health and metrics data
-    let healthData = {}
-    let metricsData = {}
+    <script>
+        // admin password check
+        const ADMIN_PASSWORD = "iutadmin"
 
-    // build the health cards on page load
-    function buildHealthGrid() {
-        const grid = document.getElementById('healthGrid')
-        grid.innerHTML = ''
+        function checkAdminPassword() {
+            const inputPassword = document.getElementById('adminPasswordInput').value
+            const errorBox = document.getElementById('adminLoginError')
 
-        services.forEach(function(service) {
-            const card = document.createElement('div')
-            card.className = 'health-card'
-            card.id = `health-${service.id}`
-            card.innerHTML = `
+            if (inputPassword === ADMIN_PASSWORD) {
+                // correct password - hide the overlay
+                document.getElementById('adminLoginOverlay').style.display = 'none'
+            } else {
+                // wrong password
+                errorBox.style.display = 'block'
+                document.getElementById('adminPasswordInput').value = ''
+            }
+        }
+
+        // allow pressing enter to login
+        document.addEventListener('keydown', function (e) {
+            const overlay = document.getElementById('adminLoginOverlay')
+            if (e.key === 'Enter' && overlay.style.display !== 'none') {
+                checkAdminPassword()
+            }
+        })
+        // all services we monitor
+        const services = [
+            { name: 'Identity Provider', port: 3001, id: 'identity-provider' },
+            { name: 'Order Gateway', port: 3002, id: 'order-gateway' },
+            { name: 'Stock Service', port: 3003, id: 'stock-service' },
+            { name: 'Kitchen Queue', port: 3004, id: 'kitchen-queue' },
+            { name: 'Notification Hub', port: 3005, id: 'notification-hub' }
+        ]
+
+        // store health and metrics data
+        let healthData = {}
+        let metricsData = {}
+
+        // build the health cards on page load
+        function buildHealthGrid() {
+            const grid = document.getElementById('healthGrid')
+            grid.innerHTML = ''
+
+            services.forEach(function (service) {
+                const card = document.createElement('div')
+                card.className = 'health-card'
+                card.id = `health-${service.id}`
+                card.innerHTML = `
                 <div class="service-name">${service.name}</div>
                 <span class="status-dot" id="dot-${service.id}"></span>
                 <div class="status-text" id="status-${service.id}">Checking...</div>
                 <div class="last-checked" id="checked-${service.id}">--</div>
             `
-            grid.appendChild(card)
-        })
-    }
+                grid.appendChild(card)
+            })
+        }
 
-    // build metrics cards
-    function buildMetricsGrid() {
-        const grid = document.getElementById('metricsGrid')
-        grid.innerHTML = ''
+        // build metrics cards
+        function buildMetricsGrid() {
+            const grid = document.getElementById('metricsGrid')
+            grid.innerHTML = ''
 
-        services.forEach(function(service) {
-            const card = document.createElement('div')
-            card.className = 'metric-card'
-            card.id = `metrics-${service.id}`
-            card.innerHTML = `
+            services.forEach(function (service) {
+                const card = document.createElement('div')
+                card.className = 'metric-card'
+                card.id = `metrics-${service.id}`
+                card.innerHTML = `
                 <div class="metric-service">${service.name}</div>
                 <div class="metric-row">
                     <span>Total Requests</span>
@@ -374,155 +376,156 @@ document.addEventListener('keydown', function(e) {
                     <span class="metric-value" id="lat-${service.id}">--</span>
                 </div>
             `
-            grid.appendChild(card)
-        })
-    }
+                grid.appendChild(card)
+            })
+        }
 
-    // build chaos buttons
-    function buildChaosButtons() {
-        const container = document.getElementById('chaosButtons')
-        container.innerHTML = ''
+        // build chaos buttons
+        function buildChaosButtons() {
+            const container = document.getElementById('chaosButtons')
+            container.innerHTML = ''
 
-        services.forEach(function(service) {
-            const btn = document.createElement('button')
-            btn.className = 'btn-chaos'
-            btn.id = `chaos-${service.id}`
-            btn.textContent = `Kill ${service.name}`
-            btn.onclick = function() { handleChaos(service) }
-            container.appendChild(btn)
-        })
-    }
+            services.forEach(function (service) {
+                const btn = document.createElement('button')
+                btn.className = 'btn-chaos'
+                btn.id = `chaos-${service.id}`
+                btn.textContent = `Kill ${service.name}`
+                btn.onclick = function () { handleChaos(service) }
+                container.appendChild(btn)
+            })
+        }
 
-    // check health of all services
-    async function checkAllHealth() {
-        for (const service of services) {
-            try {
-                const response = await fetch(`http://localhost:${service.port}/health`, {
-                    signal: AbortSignal.timeout(3000)
-                })
+        // check health of all services
+        async function checkAllHealth() {
+            for (const service of services) {
+                try {
+                    const response = await fetch(`http://localhost:${service.port}/health`, {
+                        signal: AbortSignal.timeout(3000)
+                    })
 
-                const now = new Date().toLocaleTimeString()
+                    const now = new Date().toLocaleTimeString()
 
-                if (response.ok) {
-                    document.getElementById(`dot-${service.id}`).className = 'status-dot green'
-                    document.getElementById(`status-${service.id}`).textContent = 'Online'
-                    document.getElementById(`status-${service.id}`).className = 'status-text online'
-                    document.getElementById(`checked-${service.id}`).textContent = `Checked: ${now}`
-                } else {
+                    if (response.ok) {
+                        document.getElementById(`dot-${service.id}`).className = 'status-dot green'
+                        document.getElementById(`status-${service.id}`).textContent = 'Online'
+                        document.getElementById(`status-${service.id}`).className = 'status-text online'
+                        document.getElementById(`checked-${service.id}`).textContent = `Checked: ${now}`
+                    } else {
+                        setServiceOffline(service.id)
+                    }
+
+                } catch (err) {
                     setServiceOffline(service.id)
                 }
-
-            } catch (err) {
-                setServiceOffline(service.id)
             }
         }
-    }
 
-    // mark a service as offline in the ui
-    function setServiceOffline(serviceId) {
-        const now = new Date().toLocaleTimeString()
-        document.getElementById(`dot-${serviceId}`).className = 'status-dot red'
-        document.getElementById(`status-${serviceId}`).textContent = 'Offline'
-        document.getElementById(`status-${serviceId}`).className = 'status-text offline'
-        document.getElementById(`checked-${serviceId}`).textContent = `Checked: ${now}`
-    }
+        // mark a service as offline in the ui
+        function setServiceOffline(serviceId) {
+            const now = new Date().toLocaleTimeString()
+            document.getElementById(`dot-${serviceId}`).className = 'status-dot red'
+            document.getElementById(`status-${serviceId}`).textContent = 'Offline'
+            document.getElementById(`status-${serviceId}`).className = 'status-text offline'
+            document.getElementById(`checked-${serviceId}`).textContent = `Checked: ${now}`
+        }
 
-    // fetch metrics from all services
-    async function fetchAllMetrics() {
-        for (const service of services) {
-            try {
-                const response = await fetch(`http://localhost:${service.port}/metrics`, {
-                    signal: AbortSignal.timeout(3000)
-                })
+        // fetch metrics from all services
+        async function fetchAllMetrics() {
+            for (const service of services) {
+                try {
+                    const response = await fetch(`http://localhost:${service.port}/metrics`, {
+                        signal: AbortSignal.timeout(3000)
+                    })
 
-                if (response.ok) {
-                    const data = await response.json()
-                    document.getElementById(`req-${service.id}`).textContent = data.totalRequests || 0
-                    document.getElementById(`err-${service.id}`).textContent = data.totalErrors || 0
-                    document.getElementById(`lat-${service.id}`).textContent = `${data.avgResponseTimeMs || 0}ms`
+                    if (response.ok) {
+                        const data = await response.json()
+                        document.getElementById(`req-${service.id}`).textContent = data.totalRequests || 0
+                        document.getElementById(`err-${service.id}`).textContent = data.totalErrors || 0
+                        document.getElementById(`lat-${service.id}`).textContent = `${data.avgResponseTimeMs || 0}ms`
+                    }
+
+                } catch (err) {
+                    document.getElementById(`req-${service.id}`).textContent = 'N/A'
+                    document.getElementById(`err-${service.id}`).textContent = 'N/A'
+                    document.getElementById(`lat-${service.id}`).textContent = 'N/A'
                 }
-
-            } catch (err) {
-                document.getElementById(`req-${service.id}`).textContent = 'N/A'
-                document.getElementById(`err-${service.id}`).textContent = 'N/A'
-                document.getElementById(`lat-${service.id}`).textContent = 'N/A'
             }
         }
-    }
 
-    // handle chaos button click
-    async function handleChaos(service) {
-        const btn = document.getElementById(`chaos-${service.id}`)
+        // handle chaos button click
+        async function handleChaos(service) {
+            const btn = document.getElementById(`chaos-${service.id}`)
 
-        // change button to red killing state
-        btn.textContent = `Killing ${service.name}...`
-        btn.className = 'btn-chaos killing'
-        btn.disabled = true
+            // change button to red killing state
+            btn.textContent = `Killing ${service.name}...`
+            btn.className = 'btn-chaos killing'
+            btn.disabled = true
 
-        try {
-            // send kill request to the service
-            await fetch(`http://localhost:${service.port}/die`, { method: 'POST' })
-        } catch (err) {
-            // it's fine if this fails - service might already be dead
-        }
-
-        // wait 2 seconds then show restarting
-        setTimeout(function() {
-            btn.textContent = `Restarting...`
-            btn.className = 'btn-chaos recovering'
-        }, 2000)
-
-        // after 5 seconds check if it recovered
-        setTimeout(async function() {
             try {
-                const response = await fetch(`http://localhost:${service.port}/health`, {
-                    signal: AbortSignal.timeout(3000)
-                })
+                // send kill request to the service
+                await fetch(`http://localhost:${service.port}/die`, { method: 'POST' })
+            } catch (err) {
+                // it's fine if this fails - service might already be dead
+            }
 
-                if (response.ok) {
-                    btn.textContent = `✅ ${service.name} Recovered`
-                    btn.className = 'btn-chaos recovered'
-                } else {
+            // wait 2 seconds then show restarting
+            setTimeout(function () {
+                btn.textContent = `Restarting...`
+                btn.className = 'btn-chaos recovering'
+            }, 2000)
+
+            // after 5 seconds check if it recovered
+            setTimeout(async function () {
+                try {
+                    const response = await fetch(`http://localhost:${service.port}/health`, {
+                        signal: AbortSignal.timeout(3000)
+                    })
+
+                    if (response.ok) {
+                        btn.textContent = `✅ ${service.name} Recovered`
+                        btn.className = 'btn-chaos recovered'
+                    } else {
+                        btn.textContent = `❌ Still Down — Kill ${service.name}`
+                        btn.className = 'btn-chaos killing'
+                    }
+
+                } catch (err) {
                     btn.textContent = `❌ Still Down — Kill ${service.name}`
                     btn.className = 'btn-chaos killing'
                 }
 
-            } catch (err) {
-                btn.textContent = `❌ Still Down — Kill ${service.name}`
-                btn.className = 'btn-chaos killing'
-            }
+                // re-enable after 3 more seconds
+                setTimeout(function () {
+                    btn.textContent = `Kill ${service.name}`
+                    btn.className = 'btn-chaos'
+                    btn.disabled = false
+                }, 3000)
 
-            // re-enable after 3 more seconds
-            setTimeout(function() {
-                btn.textContent = `Kill ${service.name}`
-                btn.className = 'btn-chaos'
-                btn.disabled = false
-            }, 3000)
+            }, 5000)
+        }
 
-        }, 5000)
-    }
+        // update the last updated time in header
+        function updateTimestamp() {
+            const now = new Date().toLocaleTimeString()
+            document.getElementById('lastUpdated').textContent = `Last updated: ${now}`
+        }
 
-    // update the last updated time in header
-    function updateTimestamp() {
-        const now = new Date().toLocaleTimeString()
-        document.getElementById('lastUpdated').textContent = `Last updated: ${now}`
-    }
-
-    // run everything when page loads
-    buildHealthGrid()
-    buildMetricsGrid()
-    buildChaosButtons()
-    checkAllHealth()
-    fetchAllMetrics()
-    updateTimestamp()
-
-    // auto refresh every 3 seconds
-    setInterval(function() {
+        // run everything when page loads
+        buildHealthGrid()
+        buildMetricsGrid()
+        buildChaosButtons()
         checkAllHealth()
         fetchAllMetrics()
         updateTimestamp()
-    }, 3000)
-</script>
+
+        // auto refresh every 3 seconds
+        setInterval(function () {
+            checkAllHealth()
+            fetchAllMetrics()
+            updateTimestamp()
+        }, 3000)
+    </script>
 
 </body>
+
 </html>
