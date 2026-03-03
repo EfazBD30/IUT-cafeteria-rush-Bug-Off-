@@ -5,7 +5,7 @@ require('dotenv').config()
 const express = require('express')
 const http = require('http')
 const cors = require('cors')
-const { setupWebSocket } = require('./websocket/notifier')
+const { setupWebSocket, getActiveConnections } = require('./websocket/notifier')
 const { startListening, closeConnections } = require('./queue/listener')
 
 const app = express()
@@ -54,13 +54,11 @@ app.get('/metrics', (req, res) => {
         totalRequests: app.locals.metrics.totalRequests,
         totalErrors: app.locals.metrics.errors,
         avgResponseTimeMs: avgTime,
-        activeConnections: require('./websocket/notifier').getActiveConnections()
+        activeConnections: getActiveConnections()
     })
 })
 
-// =====================================================
-// CHAOS ENGINEERING ENDPOINT - for admin dashboard
-// =====================================================
+// CHAOS ENGINEERING ENDPOINT
 app.post('/die', (req, res) => {
     console.log('💀 Notification Hub is going down (chaos toggle triggered)')
     console.log('Docker will restart this service automatically')
@@ -70,32 +68,42 @@ app.post('/die', (req, res) => {
         message: 'Service is shutting down...' 
     })
     
-    // kill the process after sending response
     setTimeout(() => {
         process.exit(1)
     }, 100)
 })
-// =====================================================
 
-// we need to create an http server manually
-// because websocket needs to share the same server
+// create http server
 const server = http.createServer(app)
 
 // attach websocket to the http server
-setupWebSocket(server)
+const wss = setupWebSocket(server)
+
+// make wss available globally for ping handling
+global.wss = wss
 
 // start listening to rabbitmq for order updates
 startListening()
 
-server.listen(PORT, () => {
-    console.log(`✅ Notification Hub running on port ${PORT}`)
-    console.log(`✅ WebSocket available at ws://localhost:${PORT}`)
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Notification Hub running on port ${PORT} (network enabled)`)
+    console.log(`✅ WebSocket available at ws://0.0.0.0:${PORT}`)
 })
 
 // graceful shutdown
 process.on('SIGTERM', async () => {
     console.log('SIGTERM received, closing connections...')
     await closeConnections()
+    
+    // close all websocket connections
+    if (global.wss) {
+        global.wss.clients.forEach(client => {
+            if (client.readyState === 1) { // WebSocket.OPEN
+                client.close()
+            }
+        })
+    }
+    
     server.close(() => {
         console.log('Server closed')
         process.exit(0)
@@ -105,6 +113,16 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
     console.log('SIGINT received, closing connections...')
     await closeConnections()
+    
+    // close all websocket connections
+    if (global.wss) {
+        global.wss.clients.forEach(client => {
+            if (client.readyState === 1) { // WebSocket.OPEN
+                client.close()
+            }
+        })
+    }
+    
     server.close(() => {
         console.log('Server closed')
         process.exit(0)
