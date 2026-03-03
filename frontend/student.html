@@ -378,7 +378,7 @@
     <script>
         const IDENTITY_URL = 'http://192.168.0.163:3001'
 	const ORDER_URL = 'http://192.168.0.163:3002'
-	const NOTIFICATION_WS = 'ws://192.168.0.163:3005'
+	const NOTIFICATION_WS = 'ws://172.18.0.8:3005'
 
         let userToken = null
         let currentStudentId = null
@@ -485,22 +485,59 @@
         }
 
         function connectWebSocket() {
+    try {
+        // Close existing connection if any
+        if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+            wsConnection.close()
+        }
+
+        wsConnection = new WebSocket(NOTIFICATION_WS)
+        
+        wsConnection.onopen = function() {
+            console.log('WebSocket connected')
+            // Send identify immediately
+            wsConnection.send(JSON.stringify({
+                type: 'identify',
+                studentId: currentStudentId
+            }))
+            
+            // Send ping every 25 seconds to keep connection alive
+            setInterval(() => {
+                if (wsConnection.readyState === WebSocket.OPEN) {
+                    wsConnection.send(JSON.stringify({ type: 'ping' }))
+                }
+            }, 25000)
+        }
+
+        wsConnection.onmessage = function(event) {
             try {
-                wsConnection = new WebSocket(NOTIFICATION_WS)
-                wsConnection.onopen = () => {
-                    console.log('WebSocket connected')
-                    wsConnection.send(JSON.stringify({ type: 'identify', studentId: currentStudentId }))
+                const data = JSON.parse(event.data)
+                console.log('WebSocket message:', data)
+                if (data.type === 'orderUpdate') {
+                    updateStatusBar(data.status)
                 }
-                wsConnection.onmessage = (event) => {
-                    const data = JSON.parse(event.data)
-                    if (data.type === 'orderUpdate') updateStatusBar(data.status)
-                }
-                wsConnection.onerror = (err) => console.log('WebSocket error:', err)
-                wsConnection.onclose = () => console.log('WebSocket disconnected')
             } catch (err) {
-                console.log('Could not connect to WebSocket:', err)
+                console.log('Error parsing message:', err)
             }
         }
+
+        wsConnection.onerror = function(err) {
+            console.log('WebSocket error:', err)
+            // Try to reconnect after 3 seconds
+            setTimeout(connectWebSocket, 3000)
+        }
+
+        wsConnection.onclose = function() {
+            console.log('WebSocket disconnected')
+            // Try to reconnect after 3 seconds
+            setTimeout(connectWebSocket, 3000)
+        }
+
+    } catch (err) {
+        console.log('Could not connect to WebSocket:', err)
+        setTimeout(connectWebSocket, 3000)
+    }
+}
 
         function updateStatusBar(status) {
             if (status === 'Stock Verified') {
